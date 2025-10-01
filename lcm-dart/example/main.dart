@@ -3,7 +3,7 @@ import 'lib/my_messages/point_t.dart';
 
 void main() {
   // Create a point message
-  final point = point_t(
+  final point = PointT(
     x: 1.5,
     y: 2.5,
     z: 3.5,
@@ -20,7 +20,7 @@ void main() {
 
   // Decode the message
   final decodeBuffer = LcmBuffer.fromUint8List(bytes);
-  final decoded = point_t.decode(decodeBuffer);
+  final decoded = PointT.decode(decodeBuffer);
 
   print('Decoded point: (${decoded.x}, ${decoded.y}, ${decoded.z})');
   

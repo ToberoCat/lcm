@@ -41,6 +41,7 @@ feedback and involvement on new features.
 * Languages
   * C
   * C++
+  * Dart
   * Java
   * Lua
   * MATLAB

@@ -1,0 +1,21 @@
+# Files and directories created by dart pub
+.dart_tool/
+.packages
+pubspec.lock
+
+# Generated files
+*.dart.js
+*.js_
+*.js.deps
+*.js.map
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Build outputs
+build/
+
+# Generated LCM files (can be regenerated from .lcm files)
+*.lcm.dart

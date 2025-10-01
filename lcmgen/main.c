@@ -35,6 +35,9 @@ int emit_csharp(lcmgen_t *lcm);
 void setup_go_options(getopt_t *gopt);
 int emit_go(lcmgen_t *lcm);
 
+void setup_dart_options(getopt_t *gopt);
+int emit_dart(lcmgen_t *lcm);
+
 void setup_cpp_options(getopt_t *gopt);
 int emit_cpp(lcmgen_t *lcm);
 
@@ -80,6 +83,10 @@ int main(int argc, char *argv[])
     getopt_add_spacer(gopt, "Go OPTIONS");
     getopt_add_bool(gopt, 'g', "go",       0, "Emit Go code");
     setup_go_options(gopt);
+
+    getopt_add_spacer(gopt, "Dart OPTIONS");
+    getopt_add_bool(gopt, 0, "dart",       0, "Emit Dart code");
+    setup_dart_options(gopt);
     // clang-format on
 
     if (!getopt_parse(gopt, argc, argv, 1) || getopt_get_bool(gopt, "help")) {
@@ -170,6 +177,14 @@ int main(int argc, char *argv[])
         did_something = 1;
         if (emit_go(lcm)) {
             printf("An error occurred while emitting Go code.\n");
+            res = -1;
+        }
+    }
+
+    if (getopt_get_bool(gopt, "dart")) {
+        did_something = 1;
+        if (emit_dart(lcm)) {
+            printf("An error occurred while emitting Dart code.\n");
             res = -1;
         }
     }

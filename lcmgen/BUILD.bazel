@@ -12,6 +12,7 @@ cc_binary(
         "emit_c.c",
         "emit_cpp.c",
         "emit_csharp.c",
+        "emit_dart.c",
         "emit_go.c",
         "emit_java.c",
         "emit_lua.c",

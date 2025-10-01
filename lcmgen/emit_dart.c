@@ -47,6 +47,29 @@ static char *dots_to_slashes(const char *s)
     return p;
 }
 
+// Convert snake_case to PascalCase (e.g., "vector3f_t" -> "Vector3fT")
+static char *to_pascal_case(const char *s)
+{
+    char *result = (char *) malloc(strlen(s) + 1);
+    int pos = 0;
+    int capitalize_next = 1;  // Capitalize first character
+
+    for (const char *p = s; *p != 0; p++) {
+        if (*p == '_') {
+            capitalize_next = 1;
+        } else {
+            if (capitalize_next) {
+                result[pos++] = toupper(*p);
+                capitalize_next = 0;
+            } else {
+                result[pos++] = *p;
+            }
+        }
+    }
+    result[pos] = '\0';
+    return result;
+}
+
 static void make_dirs_for_file(const char *path)
 {
 #ifdef WIN32
@@ -196,8 +219,9 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
     emit(0, "import 'package:lcm_dart/lcm_dart.dart';");
     fprintf(f, "\n");
 
+    char *class_name = to_pascal_case(ls->structname->shortname);
     emit_comment(f, 0, ls->comment);
-    emit(0, "class %s implements LcmMessage {", ls->structname->shortname);
+    emit(0, "class %s implements LcmMessage {", class_name);
 
     // Emit hash constant
     emit(1, "static const int LCM_FINGERPRINT = 0x%016" PRIx64 ";", ls->hash);
@@ -235,7 +259,7 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
     fprintf(f, "\n");
 
     // Constructor
-    emit(1, "%s({", ls->structname->shortname);
+    emit(1, "%s({", class_name);
     for (unsigned int i = 0; i < ls->members->len; i++) {
         lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(ls->members, i);
         if (lm->dimensions->len == 0) {
@@ -292,7 +316,7 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
     fprintf(f, "\n");
 
     // Decode static method
-    emit(1, "static %s decode(LcmBuffer buf) {", ls->structname->shortname);
+    emit(1, "static %s decode(LcmBuffer buf) {", class_name);
     emit(2, "final fingerprint = buf.getInt64();");
     emit(2, "if (fingerprint != LCM_FINGERPRINT) {");
     emit(3, "throw Exception('Invalid fingerprint');");
@@ -385,7 +409,7 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
     fprintf(f, "\n");
 
     // Return constructed object
-    emit(2, "return %s(", ls->structname->shortname);
+    emit(2, "return %s(", class_name);
     for (unsigned int i = 0; i < ls->members->len; i++) {
         lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(ls->members, i);
         emit(3, "%s: %s,", lm->membername, lm->membername);
@@ -395,6 +419,7 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
 
     emit(0, "}");
 
+    free(class_name);
     fclose(f);
     return 0;
 }
@@ -412,7 +437,7 @@ int emit_dart(lcmgen_t *lcm)
 
         char *package_dir = dots_to_slashes(ls->structname->package);
         char path[1024];
-        snprintf(path, sizeof(path), "%s%s%s%s%s.dart", dart_path, strlen(dart_path) > 0 ? "/" : "",
+        snprintf(path, sizeof(path), "%s%s%s%s%s.g.dart", dart_path, strlen(dart_path) > 0 ? "/" : "",
                  package_dir, strlen(package_dir) > 0 ? "/" : "", ls->structname->shortname);
 
         if (make_dirs)

@@ -1,0 +1,14 @@
+name: lcm_dart_example
+description: Example usage of lcm_dart package
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  lcm_dart:
+    path: ../
+
+dev_dependencies:
+  build_runner: ^2.4.0

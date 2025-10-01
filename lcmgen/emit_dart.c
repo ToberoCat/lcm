@@ -180,8 +180,10 @@ static void emit_decode_one(FILE *f, const char *type_name, const char *accessor
 static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
 {
     FILE *f = fopen(path, "w");
-    if (f == NULL)
+    if (f == NULL) {
+        perror(path);
         return -1;
+    }
 
     fprintf(f,
             "// LCM type definitions\n"

@@ -6,14 +6,14 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:lcm_dart/lcm_dart.dart';
 
-class point_t implements LcmMessage {
-  static const int LCM_FINGERPRINT = 0x573f2fdd2f76508f;
+class PointT implements LcmMessage {
+  static const int LCM_FINGERPRINT = 0xae7e5fba5eeca11e;
 
   double x;
   double y;
   double z;
 
-  point_t({
+  PointT({
     required this.x,
     required this.y,
     required this.z,
@@ -30,7 +30,7 @@ class point_t implements LcmMessage {
     buf.putFloat64(z);
   }
 
-  static point_t decode(LcmBuffer buf) {
+  static PointT decode(LcmBuffer buf) {
     final fingerprint = buf.getInt64();
     if (fingerprint != LCM_FINGERPRINT) {
       throw Exception('Invalid fingerprint');
@@ -40,7 +40,7 @@ class point_t implements LcmMessage {
     final y = buf.getFloat64();
     final z = buf.getFloat64();
 
-    return point_t(
+    return PointT(
       x: x,
       y: y,
       z: z,

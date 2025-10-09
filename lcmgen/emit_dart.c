@@ -225,7 +225,8 @@ static int emit_struct(lcmgen_t *lcm, lcm_struct_t *ls, const char *path)
 
     // Emit hash constant
     // Apply the LCM fingerprint transformation: (hash<<1) + ((hash>>63)&1)
-    int64_t fingerprint = (ls->hash << 1) + ((ls->hash >> 63) & 1);
+    // Use unsigned arithmetic to match other language implementations
+    uint64_t fingerprint = ((uint64_t)ls->hash << 1) + ((uint64_t)ls->hash >> 63);
     emit(1, "static const int LCM_FINGERPRINT = 0x%016" PRIx64 ";", fingerprint);
     fprintf(f, "\n");
 

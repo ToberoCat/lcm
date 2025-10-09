@@ -356,13 +356,167 @@ try {
 
 ## Integration with LCM Networking
 
-While this tutorial focuses on message encoding/decoding, LCM also provides networking capabilities. For Dart integration with LCM's pub/sub system, you would need to:
+The LCM Dart package includes a full UDP multicast client for publishing and subscribing to messages over the network.
 
-1. Use Dart's `dart:io` for UDP multicast
-2. Implement LCM's wire protocol
-3. Or use FFI to call the native LCM library
+### Publishing Messages
 
-This is beyond the scope of the code generator but can be built on top of the generated message classes.
+To publish messages over LCM:
+
+```dart
+import 'package:lcm_dart/lcm_dart.dart';
+import 'my_messages/my_point_t.dart';
+
+void main() async {
+  // Create LCM instance (uses default multicast address)
+  final lcm = await Lcm.create();
+
+  // Create and encode a message
+  final point = my_point_t(x: 1.0, y: 2.0, z: 3.0);
+  final buffer = LcmBuffer(1024);
+  point.encode(buffer);
+  final bytes = buffer.uint8List.sublist(0, buffer.position);
+
+  // Publish to channel
+  lcm.publish('MY_POINTS', bytes);
+
+  // Clean up when done
+  lcm.close();
+}
+```
+
+### Subscribing to Messages
+
+To receive messages from LCM:
+
+```dart
+import 'dart:typed_data';
+import 'package:lcm_dart/lcm_dart.dart';
+import 'my_messages/my_point_t.dart';
+
+void main() async {
+  // Create LCM instance
+  final lcm = await Lcm.create();
+
+  // Subscribe to a channel
+  lcm.subscribe('MY_POINTS', (String channel, Uint8List data) {
+    // Decode the message
+    final buffer = LcmBuffer.fromUint8List(data);
+    final point = my_point_t.decode(buffer);
+    
+    print('Received point: (${point.x}, ${point.y}, ${point.z})');
+  });
+
+  // Program keeps running to receive messages
+  // Call lcm.close() when shutting down
+}
+```
+
+### Channel Patterns
+
+LCM supports regex patterns for subscribing to multiple channels:
+
+```dart
+// Subscribe to all sensor channels
+lcm.subscribe('SENSOR_.*', (channel, data) {
+  print('Received sensor data on $channel');
+});
+
+// Subscribe to numbered channels
+lcm.subscribe('ROBOT_[0-9]+_STATUS', (channel, data) {
+  print('Robot status on $channel');
+});
+
+// Subscribe to all channels
+lcm.subscribe('.*', (channel, data) {
+  print('Received ${data.length} bytes on $channel');
+});
+```
+
+### Custom Network Configuration
+
+You can customize the multicast address, port, and TTL:
+
+```dart
+// Default configuration (localhost only, TTL=0)
+final lcm1 = await Lcm.create();
+
+// Specify custom settings
+final lcm2 = await Lcm.create('udpm://239.255.76.67:7667?ttl=1');
+```
+
+**TTL Settings:**
+- `ttl=0`: Packets never leave localhost (default, safest for development)
+- `ttl=1`: Packets stay on local network, don't cross routers
+- `ttl>1`: Use with caution - packets may cross network boundaries
+
+### Unsubscribing
+
+To stop receiving messages on a channel:
+
+```dart
+final subscription = lcm.subscribe('MY_CHANNEL', myHandler);
+
+// Later...
+lcm.unsubscribe(subscription);
+```
+
+### Complete Example: Publisher/Subscriber
+
+**Publisher (`publisher.dart`):**
+```dart
+import 'dart:async';
+import 'package:lcm_dart/lcm_dart.dart';
+import 'my_messages/sensor_data_t.dart';
+
+void main() async {
+  final lcm = await Lcm.create();
+  var counter = 0;
+
+  Timer.periodic(Duration(seconds: 1), (timer) {
+    final msg = sensor_data_t(
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      values: List.generate(10, (i) => i * 1.5),
+    );
+
+    final buffer = LcmBuffer(1024);
+    msg.encode(buffer);
+    lcm.publish('SENSOR_DATA', buffer.uint8List.sublist(0, buffer.position));
+
+    print('Published message ${counter++}');
+  });
+}
+```
+
+**Subscriber (`subscriber.dart`):**
+```dart
+import 'dart:typed_data';
+import 'package:lcm_dart/lcm_dart.dart';
+import 'my_messages/sensor_data_t.dart';
+
+void main() async {
+  final lcm = await Lcm.create();
+
+  lcm.subscribe('SENSOR_DATA', (channel, data) {
+    final buffer = LcmBuffer.fromUint8List(data);
+    final msg = sensor_data_t.decode(buffer);
+    
+    print('Received: timestamp=${msg.timestamp}, '
+          'values.length=${msg.values.length}');
+  });
+
+  print('Listening for messages...');
+}
+```
+
+### Large Messages and Fragmentation
+
+LCM automatically handles fragmentation for messages larger than 65KB. The implementation:
+
+- Messages ≤ 65,499 bytes: Sent as single packet
+- Messages > 65,499 bytes: Automatically fragmented and reassembled
+- Maximum message size: Limited by available memory
+
+You don't need to handle fragmentation manually - it's transparent to your application.
 
 ## Troubleshooting
 

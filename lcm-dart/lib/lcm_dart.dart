@@ -2,3 +2,4 @@
 library lcm_dart;
 
 export 'src/lcm_buffer.dart';
+export 'src/lcm.dart';

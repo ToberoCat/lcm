@@ -638,11 +638,17 @@ int emit_java(lcmgen_t *lcm)
         emit(1, "public %s()", structure->structname->shortname);
         emit(1, "{");
 
-        // pre-allocate any fixed-size arrays.
+        // Initialize scalar nested user types and pre-allocate any fixed-size arrays.
         for (unsigned int member = 0; member < g_ptr_array_size(structure->members); member++) {
             lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(structure->members, member);
             primitive_info_t *pinfo =
                 (primitive_info_t *) g_hash_table_lookup(type_table, lm->type->lctypename);
+
+            // Initialize scalar nested user types (non-primitive, zero dimensions)
+            if (pinfo == NULL && g_ptr_array_size(lm->dimensions) == 0) {
+                emit(2, "%s = new %s();", lm->membername, make_fqn(lcm, lm->type->lctypename));
+                continue;
+            }
 
             if (g_ptr_array_size(lm->dimensions) == 0 || !lcm_is_constant_size_array(lm))
                 continue;

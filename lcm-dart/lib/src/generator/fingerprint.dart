@@ -47,19 +47,16 @@ class FingerprintCalculator {
   /// Uses the formula: (hash << 1) + (hash >> 63)
   /// with unsigned 64-bit arithmetic
   int _transformToFingerprint(int hash) {
-    // Convert to unsigned for bit operations
-    final h = hash.toUnsigned(64);
-    // Perform the transformation
-    return ((h << 1) + (h >> 63)).toSigned(64);
+    // Use >>> for logical (unsigned) right shift
+    return ((hash << 1) + (hash >>> 63)).toSigned(64);
   }
 
   /// Update hash with a single byte value
   ///
   /// Formula: ((v << 8) ^ (v >> 55)) + c
   int _hashUpdate(int v, int c) {
-    // Use unsigned arithmetic
-    final vU = v.toUnsigned(64);
-    return (((vU << 8) ^ (vU >> 55)) + c).toSigned(64);
+    // Use arithmetic right shift (>>) to match C's int64_t behavior
+    return ((v << 8) ^ (v >> 55)) + c;
   }
 
   /// Update hash with a string
